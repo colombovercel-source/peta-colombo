@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Akses Peta Colombo</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+  <style>
+    :root {
+      --primary: #00bcd4;
+      --bg: #f4f7f6;
+    }
+
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); }
+
+    /* Container Utama */
+    .auth-container {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      width: 350px;
+      text-align: center;
+    }
+
+    h2 { color: #333; margin-bottom: 20px; }
+    
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      box-sizing: border-box; /* Agar padding tidak merusak lebar */
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .switch-text {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .switch-text span {
+      color: var(--primary);
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    /* Map Style */
+    #map { height: 100vh; display: none; }
+
+    /* Tombol Logout */
+    #logoutBtn {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      width: auto;
+      background: #ff5252;
+    }
+  </style>
+</head>
+<body>
+
+<div class="auth-container" id="authBox">
+  <div class="card">
+    <h2 id="formTitle">Masuk</h2>
+    
+    <input type="text" id="userInput" placeholder="Username">
+    <input type="password" id="passInput" placeholder="Password">
+    
+    <button id="mainBtn" onclick="handleAuth()">Masuk Sekarang</button>
+    
+    <p class="switch-text" id="switchText">
+      Belum punya akun? <span onclick="toggleForm()">Daftar di sini</span>
+    </p>
+  </div>
+</div>
+
+<button id="logoutBtn" style="display:none" onclick="logout()">Keluar</button>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+  // State: Apakah user sedang di mode Login atau Daftar?
+  let isLoginMode = true;
+
+  function toggleForm() {
+    isLoginMode = !isLoginMode;
+    const title = document.getElementById("formTitle");
+    const btn = document.getElementById("mainBtn");
+    const switchTxt = document.getElementById("switchText");
+
+    if (isLoginMode) {
+      title.innerText = "Masuk";
+      btn.innerText = "Masuk Sekarang";
+      switchTxt.innerHTML = 'Belum punya akun? <span onclick="toggleForm()">Daftar di sini</span>';
+    } else {
+      title.innerText = "Daftar Akun";
+      btn.innerText = "Buat Akun";
+      switchTxt.innerHTML = 'Sudah punya akun? <span onclick="toggleForm()">Login di sini</span>';
+    }
+  }
+
+  function handleAuth() {
+    const user = document.getElementById("userInput").value;
+    const pass = document.getElementById("passInput").value;
+
+    if (!user || !pass) return alert("Isi semua data!");
+
+    if (isLoginMode) {
+      // PROSES LOGIN
+      const savedPass = localStorage.getItem(`user_${user}`);
+      
+      if (savedPass && savedPass === pass) {
+        localStorage.setItem("isLoggedIn", "true");
+        showMap();
+      } else {
+        alert("Username atau Password salah!");
+      }
+    } else {
+      // PROSES DAFTAR
+      if (localStorage.getItem(`user_${user}`)) {
+        return alert("Username sudah terpakai!");
+      }
+      localStorage.setItem(`user_${user}`, pass);
+      alert("Pendaftaran Berhasil! Silakan Login.");
+      toggleForm();
+    }
+  }
+
+  function showMap() {
+    document.getElementById("authBox").style.display = "none";
+    document.getElementById("map").style.display = "block";
+    document.getElementById("logoutBtn").style.display = "block";
+
+    // Inisialisasi Peta (Colombo)
+    const map = L.map('map').setView([6.9271, 79.8612], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    L.marker([6.9271, 79.8612]).addTo(map)
+      .bindPopup("Selamat Datang di Colombo!")
+      .openPopup();
+  }
+
+  function logout() {
+    localStorage.removeItem("isLoggedIn");
+    location.reload(); // Refresh halaman untuk kembali ke login
+  }
+
+  // Cek status login saat halaman dibuka
+  if (localStorage.getItem("isLoggedIn") === "true") {
+    showMap();
+  }
+</script>
+
+</body>
+</html>
