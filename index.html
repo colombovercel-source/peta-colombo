@@ -1,183 +1,296 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Akses Peta Colombo</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dimerla Pro | Advanced Navigation System</title>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 
-  <style>
-    :root {
-      --primary: #00bcd4;
-      --bg: #f4f7f6;
-    }
+    <style>
+        /* 2. MODERN DESIGN SYSTEM */
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
 
-    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); }
+        [data-theme="dark"] {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
 
-    /* Container Utama */
-    .auth-container {
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    .card {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      width: 350px;
-      text-align: center;
-    }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            transition: background 0.3s, color 0.3s;
+            overflow: hidden; /* Mencegah scroll double */
+        }
 
-    h2 { color: #333; margin-bottom: 20px; }
-    
-    input {
-      width: 100%;
-      padding: 12px;
-      margin: 8px 0;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      box-sizing: border-box; /* Agar padding tidak merusak lebar */
-    }
+        /* 3. PROFESSIONAL NAVBAR */
+        .navbar {
+            height: 70px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            z-index: 1000;
+        }
 
-    button {
-      width: 100%;
-      padding: 12px;
-      background: var(--primary);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      margin-top: 10px;
-    }
+        .logo { font-weight: 800; font-size: 22px; color: var(--primary); letter-spacing: -1px; }
 
-    .switch-text {
-      margin-top: 15px;
-      font-size: 14px;
-      color: #666;
-    }
+        .nav-actions { display: flex; gap: 12px; align-items: center; }
 
-    .switch-text span {
-      color: var(--primary);
-      cursor: pointer;
-      text-decoration: underline;
-    }
+        .btn-icon {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
 
-    /* Map Style */
-    #map { height: 100vh; display: none; }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
 
-    /* Tombol Logout */
-    #logoutBtn {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      z-index: 1000;
-      width: auto;
-      background: #ff5252;
-    }
-  </style>
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+
+        /* 4. AUTH SECTION (GLASSMORPHISM) */
+        .auth-wrapper {
+            height: calc(100vh - 70px);
+            display: flex; justify-content: center; align-items: center;
+            background: radial-gradient(circle at top right, var(--primary), transparent);
+        }
+
+        .auth-card {
+            background: var(--surface);
+            padding: 40px;
+            border-radius: 24px;
+            width: 100%; max-width: 400px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .auth-card h2 { margin-bottom: 8px; font-weight: 800; }
+        .auth-card p { color: var(--text-muted); font-size: 14px; margin-bottom: 24px; }
+
+        input {
+            width: 100%; padding: 14px; margin-bottom: 16px;
+            border-radius: 12px; border: 1px solid var(--border);
+            background: var(--bg); color: var(--text-main);
+            font-size: 15px; outline: none;
+        }
+
+        input:focus { border-color: var(--primary); ring: 2px var(--primary); }
+
+        /* 5. MAP SECTION */
+        #app-content { display: none; height: calc(100vh - 70px); position: relative; }
+
+        #map { height: 100%; width: 100%; }
+
+        /* Customizing Leaflet Search Control to look better */
+        .leaflet-control-geocoder {
+            border-radius: 12px !important;
+            box-shadow: var(--shadow) !important;
+            border: none !important;
+        }
+
+        .log-panel {
+            position: absolute;
+            bottom: 30px; left: 30px;
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 16px;
+            width: 320px;
+            box-shadow: var(--shadow);
+            z-index: 1000;
+            border: 1px solid var(--border);
+        }
+
+        .log-header { font-weight: 700; font-size: 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        #log-list { max-height: 120px; overflow-y: auto; font-size: 13px; color: var(--text-muted); }
+        .log-entry { padding: 6px 0; border-bottom: 1px solid var(--border); }
+
+        /* Hidden default routing panel for cleaner look */
+        .leaflet-routing-container { display: none; }
+    </style>
 </head>
 <body>
 
-<div class="auth-container" id="authBox">
-  <div class="card">
-    <h2 id="formTitle">Masuk</h2>
-    
-    <input type="text" id="userInput" placeholder="Username">
-    <input type="password" id="passInput" placeholder="Password">
-    
-    <button id="mainBtn" onclick="handleAuth()">Masuk Sekarang</button>
-    
-    <p class="switch-text" id="switchText">
-      Belum punya akun? <span onclick="toggleForm()">Daftar di sini</span>
-    </p>
-  </div>
-</div>
+    <header class="navbar">
+        <div class="logo">DIMERLA<span style="color:var(--text-main)">.PRO</span></div>
+        <div class="nav-actions">
+            <button class="btn-icon" onclick="toggleTheme()" id="themeBtn">🌓</button>
+            <button class="btn-primary" id="logoutBtn" style="display:none; background:#ef4444;" onclick="logout()">Keluar</button>
+        </div>
+    </header>
 
-<button id="logoutBtn" style="display:none" onclick="logout()">Keluar</button>
-<div id="map"></div>
+    <main id="auth-section" class="auth-wrapper">
+        <div class="auth-card">
+            <h2 id="title">Selamat Datang</h2>
+            <p id="subtitle">Silakan masuk untuk melanjutkan navigasi</p>
+            
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            
+            <button class="btn-primary" style="width:100%" onclick="processAuth()" id="actionBtn">Masuk</button>
+            
+            <p style="margin-top:20px; font-size:13px; color:var(--text-muted)">
+                <span id="toggleText">Belum punya akun?</span> 
+                <span onclick="toggleMode()" style="color:var(--primary); font-weight:600; cursor:pointer">Klik di sini</span>
+            </p>
+        </div>
+    </main>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <main id="app-content">
+        <div id="map"></div>
+        
+        <div class="log-panel">
+            <div class="log-header">🛰️ Navigasi Status</div>
+            <div id="log-list">
+                <div class="log-entry">Menunggu otentikasi...</div>
+            </div>
+        </div>
+    </main>
 
-<script>
-  // State: Apakah user sedang di mode Login atau Daftar?
-  let isLoginMode = true;
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 
-  function toggleForm() {
-    isLoginMode = !isLoginMode;
-    const title = document.getElementById("formTitle");
-    const btn = document.getElementById("mainBtn");
-    const switchTxt = document.getElementById("switchText");
+    <script>
+        let map, userLoc, routingCtrl;
+        let isLogin = true;
 
-    if (isLoginMode) {
-      title.innerText = "Masuk";
-      btn.innerText = "Masuk Sekarang";
-      switchTxt.innerHTML = 'Belum punya akun? <span onclick="toggleForm()">Daftar di sini</span>';
-    } else {
-      title.innerText = "Daftar Akun";
-      btn.innerText = "Buat Akun";
-      switchTxt.innerHTML = 'Sudah punya akun? <span onclick="toggleForm()">Login di sini</span>';
-    }
-  }
+        // 1. THEME TOGGLE
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const target = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', target);
+            localStorage.setItem('pro_theme', target);
+        }
+        if(localStorage.getItem('pro_theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
 
-  function handleAuth() {
-    const user = document.getElementById("userInput").value;
-    const pass = document.getElementById("passInput").value;
+        // 2. AUTHENTICATION SYSTEM
+        function toggleMode() {
+            isLogin = !isLogin;
+            document.getElementById('title').innerText = isLogin ? "Selamat Datang" : "Daftar Akun";
+            document.getElementById('actionBtn').innerText = isLogin ? "Masuk" : "Buat Akun";
+            document.getElementById('toggleText').innerText = isLogin ? "Belum punya akun?" : "Sudah punya akun?";
+        }
 
-    if (!user || !pass) return alert("Isi semua data!");
+        function processAuth() {
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            if(!u || !p) return;
 
-    if (isLoginMode) {
-      // PROSES LOGIN
-      const savedPass = localStorage.getItem(`user_${user}`);
-      
-      if (savedPass && savedPass === pass) {
-        localStorage.setItem("isLoggedIn", "true");
-        showMap();
-      } else {
-        alert("Username atau Password salah!");
-      }
-    } else {
-      // PROSES DAFTAR
-      if (localStorage.getItem(`user_${user}`)) {
-        return alert("Username sudah terpakai!");
-      }
-      localStorage.setItem(`user_${user}`, pass);
-      alert("Pendaftaran Berhasil! Silakan Login.");
-      toggleForm();
-    }
-  }
+            if(isLogin) {
+                if(localStorage.getItem(`pro_u_${u}`) === p) {
+                    localStorage.setItem('pro_session', u);
+                    startApp();
+                } else { alert("Kredensial salah"); }
+            } else {
+                localStorage.setItem(`pro_u_${u}`, p);
+                alert("Berhasil terdaftar!");
+                toggleMode();
+            }
+        }
 
-  function showMap() {
-    document.getElementById("authBox").style.display = "none";
-    document.getElementById("map").style.display = "block";
-    document.getElementById("logoutBtn").style.display = "block";
+        // 3. CORE MAP & NAVIGATION
+        function startApp() {
+            document.getElementById('auth-section').style.display = 'none';
+            document.getElementById('app-content').style.display = 'block';
+            document.getElementById('logoutBtn').style.display = 'block';
 
-    // Inisialisasi Peta (Colombo)
-    const map = L.map('map').setView([6.9271, 79.8612], 13);
+            // Init Map (World View)
+            map = L.map('map', { zoomControl: false }).setView([0, 0], 2);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(map);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+            // Add Zoom Control to Bottom Right
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    L.marker([6.9271, 79.8612]).addTo(map)
-      .bindPopup("Selamat Datang di Colombo!")
-      .openPopup();
-  }
+            // Search Feature (Geocoder)
+            const geocoder = L.Control.geocoder({
+                defaultMarkGeocode: false,
+                placeholder: "Cari lokasi di seluruh dunia...",
+                position: 'topleft'
+            }).on('markgeocode', function(e) {
+                const dest = e.geocode.center;
+                if(userLoc) {
+                    calculateRoute(userLoc, dest, e.geocode.name);
+                } else {
+                    map.flyTo(dest, 16);
+                    L.marker(dest).addTo(map).bindPopup(e.geocode.name).openPopup();
+                }
+            }).addTo(map);
 
-  function logout() {
-    localStorage.removeItem("isLoggedIn");
-    location.reload(); // Refresh halaman untuk kembali ke login
-  }
+            // Geolocation (GPS)
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    userLoc = L.latLng(pos.coords.latitude, pos.coords.longitude);
+                    map.flyTo(userLoc, 15);
+                    L.circle(userLoc, { radius: 200, color: '#6366f1' }).addTo(map);
+                    addLog("Lokasi Anda berhasil diverifikasi.");
+                }, () => addLog("GPS tidak aktif. Gunakan pencarian."));
+            }
+        }
 
-  // Cek status login saat halaman dibuka
-  if (localStorage.getItem("isLoggedIn") === "true") {
-    showMap();
-  }
-</script>
+        function calculateRoute(start, end, name) {
+            if(routingCtrl) map.removeControl(routingCtrl);
 
+            routingCtrl = L.Routing.control({
+                waypoints: [start, end],
+                lineOptions: { styles: [{ color: '#6366f1', weight: 6, opacity: 0.8 }] },
+                createMarker: function() { return null; }
+            }).on('routesfound', function(e) {
+                const r = e.routes[0];
+                const km = (r.summary.totalDistance / 1000).toFixed(1);
+                const min = Math.round(r.summary.totalTime / 60);
+                addLog(`Tujuan: ${name}`);
+                addLog(`Jarak: ${km} km | Estimasi: ${min} menit`);
+            }).addTo(map);
+        }
+
+        function addLog(msg) {
+            const list = document.getElementById('log-list');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<b>></b> ${msg}`;
+            list.prepend(entry);
+        }
+
+        function logout() { localStorage.removeItem('pro_session'); location.reload(); }
+        if(localStorage.getItem('pro_session')) startApp();
+
+    </script>
 </body>
 </html>
