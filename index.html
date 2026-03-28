@@ -1,296 +1,463 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dimerla Pro | Advanced Navigation System</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dimerla Pro | Navigation</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --brand: #00c896;
+  --brand-dark: #00a87e;
+  --brand-glow: rgba(0,200,150,0.25);
+  --bg: #0a0f1a;
+  --surface: #111827;
+  --surface2: #1a2235;
+  --border: rgba(255,255,255,0.07);
+  --text: #f0f4f8;
+  --muted: #64748b;
+  --danger: #ef4444;
+  --sans: 'DM Sans', system-ui, sans-serif;
+  --display: 'Syne', system-ui, sans-serif;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; font-family:var(--sans); background:var(--bg); color:var(--text); }
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+/* ── NAVBAR ── */
+.navbar {
+  height:60px; display:flex; align-items:center; justify-content:space-between;
+  padding:0 20px; background:var(--surface);
+  border-bottom:1px solid var(--border);
+  position:relative; z-index:1100;
+}
+.logo {
+  font-family:var(--display); font-weight:800; font-size:20px;
+  letter-spacing:-0.5px; color:var(--brand);
+  display:flex; align-items:center; gap:8px;
+}
+.logo-dot { width:8px; height:8px; border-radius:50%; background:var(--brand); animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{box-shadow:0 0 0 0 var(--brand-glow)} 50%{box-shadow:0 0 0 8px transparent} }
+.nav-right { display:flex; gap:10px; align-items:center; }
+.btn-icon {
+  width:36px; height:36px; border-radius:10px;
+  border:1px solid var(--border); background:var(--surface2);
+  color:var(--text); cursor:pointer; font-size:16px;
+  display:flex; align-items:center; justify-content:center;
+  transition:all 0.2s;
+}
+.btn-icon:hover { border-color:var(--brand); color:var(--brand); }
+.btn-logout {
+  padding:8px 16px; border-radius:10px; border:none;
+  background:rgba(239,68,68,0.15); color:#ef4444;
+  font-family:var(--sans); font-size:13px; font-weight:600;
+  cursor:pointer; transition:all 0.2s; display:none;
+  border:1px solid rgba(239,68,68,0.3);
+}
+.btn-logout:hover { background:rgba(239,68,68,0.25); }
 
-    <style>
-        /* 2. MODERN DESIGN SYSTEM */
-        :root {
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --bg: #f8fafc;
-            --surface: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-        }
+/* ── AUTH ── */
+.auth-wrapper {
+  height:calc(100vh - 60px); display:flex;
+  align-items:center; justify-content:center;
+  background:radial-gradient(ellipse at 70% 30%, rgba(0,200,150,0.08) 0%, transparent 60%),
+             radial-gradient(ellipse at 20% 80%, rgba(99,102,241,0.06) 0%, transparent 50%);
+}
+.auth-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:24px; padding:40px; width:100%; max-width:400px;
+  box-shadow:0 25px 50px rgba(0,0,0,0.5);
+  animation:slideUp 0.4s ease;
+}
+@keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+.auth-icon {
+  width:56px; height:56px; border-radius:16px;
+  background:linear-gradient(135deg,var(--brand),var(--brand-dark));
+  display:flex; align-items:center; justify-content:center;
+  font-size:24px; margin:0 auto 20px; box-shadow:0 0 30px var(--brand-glow);
+}
+.auth-title { font-family:var(--display); font-size:22px; font-weight:800; text-align:center; margin-bottom:6px; }
+.auth-sub { font-size:13px; color:var(--muted); text-align:center; margin-bottom:28px; }
+.input-group { position:relative; margin-bottom:14px; }
+.input-group input {
+  width:100%; padding:14px 16px 14px 44px;
+  border-radius:12px; border:1px solid var(--border);
+  background:var(--surface2); color:var(--text);
+  font-family:var(--sans); font-size:14px; outline:none;
+  transition:border-color 0.2s, box-shadow 0.2s;
+}
+.input-group input:focus { border-color:var(--brand); box-shadow:0 0 0 3px var(--brand-glow); }
+.input-group input::placeholder { color:var(--muted); }
+.input-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); font-size:16px; pointer-events:none; }
+.btn-auth {
+  width:100%; padding:14px; border-radius:12px; border:none;
+  background:linear-gradient(135deg,var(--brand),var(--brand-dark));
+  color:#0a0f1a; font-family:var(--display); font-size:15px;
+  font-weight:700; cursor:pointer; transition:all 0.2s;
+  box-shadow:0 4px 20px var(--brand-glow); margin-top:4px;
+}
+.btn-auth:hover { transform:translateY(-2px); box-shadow:0 8px 30px var(--brand-glow); }
+.btn-auth:active { transform:translateY(0); }
+.auth-toggle { text-align:center; margin-top:20px; font-size:13px; color:var(--muted); }
+.auth-toggle span { color:var(--brand); font-weight:600; cursor:pointer; }
+.auth-toggle span:hover { text-decoration:underline; }
 
-        [data-theme="dark"] {
-            --bg: #0f172a;
-            --surface: #1e293b;
-            --text-main: #f1f5f9;
-            --text-muted: #94a3b8;
-            --border: #334155;
-            --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-        }
+/* ── APP ── */
+#app-content { display:none; height:calc(100vh - 60px); position:relative; }
+#map { height:100%; width:100%; }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+/* ── SEARCH PANEL ── */
+.search-panel {
+  position:absolute; top:16px; left:50%; transform:translateX(-50%);
+  z-index:1000; width:calc(100% - 32px); max-width:500px;
+}
+.search-box {
+  display:flex; align-items:center; gap:10px;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; padding:10px 16px;
+  box-shadow:0 8px 30px rgba(0,0,0,0.4);
+}
+.search-box input {
+  flex:1; background:transparent; border:none; outline:none;
+  color:var(--text); font-family:var(--sans); font-size:14px;
+}
+.search-box input::placeholder { color:var(--muted); }
+.search-btn {
+  padding:8px 16px; border-radius:10px; border:none;
+  background:var(--brand); color:#0a0f1a;
+  font-family:var(--sans); font-weight:600; font-size:13px;
+  cursor:pointer; white-space:nowrap; transition:all 0.2s;
+}
+.search-btn:hover { background:var(--brand-dark); }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg);
-            color: var(--text-main);
-            transition: background 0.3s, color 0.3s;
-            overflow: hidden; /* Mencegah scroll double */
-        }
+/* ── BOTTOM PANEL ── */
+.bottom-panel {
+  position:absolute; bottom:20px; left:16px;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:16px; padding:16px 20px; min-width:280px; max-width:340px;
+  box-shadow:0 8px 30px rgba(0,0,0,0.5); z-index:1000;
+}
+.panel-header {
+  display:flex; align-items:center; gap:8px;
+  font-family:var(--display); font-size:13px; font-weight:700;
+  color:var(--brand); margin-bottom:10px;
+  text-transform:uppercase; letter-spacing:0.5px;
+}
+.panel-dot { width:6px; height:6px; border-radius:50%; background:var(--brand); animation:pulse 2s infinite; }
+#log-list { max-height:100px; overflow-y:auto; }
+#log-list::-webkit-scrollbar { width:3px; }
+#log-list::-webkit-scrollbar-thumb { background:var(--brand); border-radius:99px; }
+.log-entry {
+  padding:5px 0; border-bottom:1px solid var(--border);
+  font-size:12px; color:var(--muted); line-height:1.5;
+}
+.log-entry:last-child { border-bottom:none; }
+.log-entry b { color:var(--brand); }
 
-        /* 3. PROFESSIONAL NAVBAR */
-        .navbar {
-            height: 70px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 40px;
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            position: relative;
-            z-index: 1000;
-        }
+/* ── STATS BAR ── */
+.stats-bar {
+  display:none; position:absolute; bottom:20px; right:16px;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:16px; padding:16px 20px; z-index:1000;
+  box-shadow:0 8px 30px rgba(0,0,0,0.5); min-width:200px;
+}
+.stat-item { display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid var(--border); }
+.stat-item:last-child { border-bottom:none; }
+.stat-key { font-size:12px; color:var(--muted); }
+.stat-val { font-size:13px; font-weight:700; color:var(--brand); font-family:var(--display); }
 
-        .logo { font-weight: 800; font-size: 22px; color: var(--primary); letter-spacing: -1px; }
+/* ── LEAFLET OVERRIDES ── */
+.leaflet-control-zoom { border:none !important; }
+.leaflet-control-zoom a {
+  background:var(--surface) !important; color:var(--text) !important;
+  border:1px solid var(--border) !important; border-radius:8px !important;
+  margin-bottom:4px !important; width:32px !important; height:32px !important;
+  line-height:32px !important; font-size:18px !important;
+  transition:all 0.2s !important;
+}
+.leaflet-control-zoom a:hover { background:var(--surface2) !important; border-color:var(--brand) !important; color:var(--brand) !important; }
+.leaflet-popup-content-wrapper { background:var(--surface) !important; color:var(--text) !important; border:1px solid var(--border) !important; border-radius:12px !important; }
+.leaflet-popup-tip { background:var(--surface) !important; }
+.leaflet-routing-container { display:none !important; }
 
-        .nav-actions { display: flex; gap: 12px; align-items: center; }
+/* ── MY LOCATION BTN ── */
+.btn-myloc {
+  position:absolute; right:16px; top:70px; z-index:1000;
+  width:40px; height:40px; border-radius:12px;
+  background:var(--surface); border:1px solid var(--border);
+  color:var(--text); cursor:pointer; font-size:18px;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 12px rgba(0,0,0,0.3); transition:all 0.2s;
+}
+.btn-myloc:hover { border-color:var(--brand); color:var(--brand); }
 
-        .btn-icon {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            width: 40px; height: 40px;
-            border-radius: 10px;
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 10px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
-
-        /* 4. AUTH SECTION (GLASSMORPHISM) */
-        .auth-wrapper {
-            height: calc(100vh - 70px);
-            display: flex; justify-content: center; align-items: center;
-            background: radial-gradient(circle at top right, var(--primary), transparent);
-        }
-
-        .auth-card {
-            background: var(--surface);
-            padding: 40px;
-            border-radius: 24px;
-            width: 100%; max-width: 400px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-            text-align: center;
-        }
-
-        .auth-card h2 { margin-bottom: 8px; font-weight: 800; }
-        .auth-card p { color: var(--text-muted); font-size: 14px; margin-bottom: 24px; }
-
-        input {
-            width: 100%; padding: 14px; margin-bottom: 16px;
-            border-radius: 12px; border: 1px solid var(--border);
-            background: var(--bg); color: var(--text-main);
-            font-size: 15px; outline: none;
-        }
-
-        input:focus { border-color: var(--primary); ring: 2px var(--primary); }
-
-        /* 5. MAP SECTION */
-        #app-content { display: none; height: calc(100vh - 70px); position: relative; }
-
-        #map { height: 100%; width: 100%; }
-
-        /* Customizing Leaflet Search Control to look better */
-        .leaflet-control-geocoder {
-            border-radius: 12px !important;
-            box-shadow: var(--shadow) !important;
-            border: none !important;
-        }
-
-        .log-panel {
-            position: absolute;
-            bottom: 30px; left: 30px;
-            background: var(--surface);
-            padding: 20px;
-            border-radius: 16px;
-            width: 320px;
-            box-shadow: var(--shadow);
-            z-index: 1000;
-            border: 1px solid var(--border);
-        }
-
-        .log-header { font-weight: 700; font-size: 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-        #log-list { max-height: 120px; overflow-y: auto; font-size: 13px; color: var(--text-muted); }
-        .log-entry { padding: 6px 0; border-bottom: 1px solid var(--border); }
-
-        /* Hidden default routing panel for cleaner look */
-        .leaflet-routing-container { display: none; }
-    </style>
+@media(max-width:480px) {
+  .auth-card { margin:16px; padding:28px; }
+  .bottom-panel { left:8px; right:8px; max-width:none; min-width:0; }
+  .stats-bar { right:8px; }
+}
+</style>
 </head>
 <body>
 
-    <header class="navbar">
-        <div class="logo">DIMERLA<span style="color:var(--text-main)">.PRO</span></div>
-        <div class="nav-actions">
-            <button class="btn-icon" onclick="toggleTheme()" id="themeBtn">🌓</button>
-            <button class="btn-primary" id="logoutBtn" style="display:none; background:#ef4444;" onclick="logout()">Keluar</button>
-        </div>
-    </header>
+<header class="navbar">
+  <div class="logo">
+    <div class="logo-dot"></div>
+    DIMERLA<span style="color:var(--muted);font-weight:400">.PRO</span>
+  </div>
+  <div class="nav-right">
+    <button class="btn-icon" onclick="toggleTheme()" title="Toggle tema">🌓</button>
+    <button class="btn-logout" id="logoutBtn" onclick="logout()">Keluar</button>
+  </div>
+</header>
 
-    <main id="auth-section" class="auth-wrapper">
-        <div class="auth-card">
-            <h2 id="title">Selamat Datang</h2>
-            <p id="subtitle">Silakan masuk untuk melanjutkan navigasi</p>
-            
-            <input type="text" id="username" placeholder="Username">
-            <input type="password" id="password" placeholder="Password">
-            
-            <button class="btn-primary" style="width:100%" onclick="processAuth()" id="actionBtn">Masuk</button>
-            
-            <p style="margin-top:20px; font-size:13px; color:var(--text-muted)">
-                <span id="toggleText">Belum punya akun?</span> 
-                <span onclick="toggleMode()" style="color:var(--primary); font-weight:600; cursor:pointer">Klik di sini</span>
-            </p>
-        </div>
-    </main>
+<!-- AUTH -->
+<main id="auth-section" class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-icon">🗺️</div>
+    <div class="auth-title" id="auth-title">Selamat Datang</div>
+    <div class="auth-sub" id="auth-sub">Masuk untuk mulai navigasi</div>
+    <div class="input-group">
+      <span class="input-icon">👤</span>
+      <input type="text" id="username" placeholder="Username" autocomplete="username">
+    </div>
+    <div class="input-group">
+      <span class="input-icon">🔒</span>
+      <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+    </div>
+    <button class="btn-auth" id="actionBtn" onclick="processAuth()">Masuk</button>
+    <div class="auth-toggle">
+      <span id="toggleText">Belum punya akun?</span>
+      <span onclick="toggleMode()"> Daftar di sini</span>
+    </div>
+  </div>
+</main>
 
-    <main id="app-content">
-        <div id="map"></div>
-        
-        <div class="log-panel">
-            <div class="log-header">🛰️ Navigasi Status</div>
-            <div id="log-list">
-                <div class="log-entry">Menunggu otentikasi...</div>
-            </div>
-        </div>
-    </main>
+<!-- APP -->
+<main id="app-content">
+  <div id="map"></div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+  <!-- Search -->
+  <div class="search-panel">
+    <div class="search-box">
+      <span style="font-size:18px;">🔍</span>
+      <input type="text" id="searchInput" placeholder="Cari tempat, kota, negara...">
+      <button class="search-btn" onclick="doSearch()">Cari</button>
+    </div>
+  </div>
 
-    <script>
-        let map, userLoc, routingCtrl;
-        let isLogin = true;
+  <!-- My Location Button -->
+  <button class="btn-myloc" onclick="goToMyLocation()" title="Lokasi saya">📍</button>
 
-        // 1. THEME TOGGLE
-        function toggleTheme() {
-            const current = document.documentElement.getAttribute('data-theme');
-            const target = current === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', target);
-            localStorage.setItem('pro_theme', target);
-        }
-        if(localStorage.getItem('pro_theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  <!-- Log Panel -->
+  <div class="bottom-panel">
+    <div class="panel-header"><div class="panel-dot"></div>Status Navigasi</div>
+    <div id="log-list"><div class="log-entry">Menunggu lokasi...</div></div>
+  </div>
 
-        // 2. AUTHENTICATION SYSTEM
-        function toggleMode() {
-            isLogin = !isLogin;
-            document.getElementById('title').innerText = isLogin ? "Selamat Datang" : "Daftar Akun";
-            document.getElementById('actionBtn').innerText = isLogin ? "Masuk" : "Buat Akun";
-            document.getElementById('toggleText').innerText = isLogin ? "Belum punya akun?" : "Sudah punya akun?";
-        }
+  <!-- Stats -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-item"><span class="stat-key">Jarak</span><span class="stat-val" id="statJarak">—</span></div>
+    <div class="stat-item"><span class="stat-key">Estimasi</span><span class="stat-val" id="statWaktu">—</span></div>
+    <div class="stat-item"><span class="stat-key">Tujuan</span><span class="stat-val" id="statTujuan">—</span></div>
+  </div>
+</main>
 
-        function processAuth() {
-            const u = document.getElementById('username').value;
-            const p = document.getElementById('password').value;
-            if(!u || !p) return;
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 
-            if(isLogin) {
-                if(localStorage.getItem(`pro_u_${u}`) === p) {
-                    localStorage.setItem('pro_session', u);
-                    startApp();
-                } else { alert("Kredensial salah"); }
-            } else {
-                localStorage.setItem(`pro_u_${u}`, p);
-                alert("Berhasil terdaftar!");
-                toggleMode();
-            }
-        }
+<script>
+let map, userLoc, routingCtrl, userMarker, geocoder;
+let isLogin = true;
+let isDark = true;
 
-        // 3. CORE MAP & NAVIGATION
-        function startApp() {
-            document.getElementById('auth-section').style.display = 'none';
-            document.getElementById('app-content').style.display = 'block';
-            document.getElementById('logoutBtn').style.display = 'block';
+// ── THEME ──
+function toggleTheme() {
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  localStorage.setItem('dm_theme', isDark ? 'dark' : 'light');
+  if (map) updateMapTile();
+}
 
-            // Init Map (World View)
-            map = L.map('map', { zoomControl: false }).setView([0, 0], 2);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; OpenStreetMap'
-            }).addTo(map);
+function updateMapTile() {
+  if (window._tileLayer) map.removeLayer(window._tileLayer);
+  const url = isDark
+    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+    : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+  window._tileLayer = L.tileLayer(url, {
+    attribution: '&copy; OpenStreetMap &copy; CartoDB',
+    maxZoom: 19
+  }).addTo(map);
+}
 
-            // Add Zoom Control to Bottom Right
-            L.control.zoom({ position: 'bottomright' }).addTo(map);
+const savedTheme = localStorage.getItem('dm_theme') || 'dark';
+isDark = savedTheme === 'dark';
+document.documentElement.setAttribute('data-theme', savedTheme);
 
-            // Search Feature (Geocoder)
-            const geocoder = L.Control.geocoder({
-                defaultMarkGeocode: false,
-                placeholder: "Cari lokasi di seluruh dunia...",
-                position: 'topleft'
-            }).on('markgeocode', function(e) {
-                const dest = e.geocode.center;
-                if(userLoc) {
-                    calculateRoute(userLoc, dest, e.geocode.name);
-                } else {
-                    map.flyTo(dest, 16);
-                    L.marker(dest).addTo(map).bindPopup(e.geocode.name).openPopup();
-                }
-            }).addTo(map);
+// Light mode CSS override
+const lightStyle = document.createElement('style');
+lightStyle.textContent = `
+  [data-theme="light"] { --bg:#f1f5f9; --surface:#ffffff; --surface2:#f8fafc; --border:rgba(0,0,0,0.08); --text:#0f172a; --muted:#64748b; }
+  [data-theme="light"] .leaflet-control-zoom a { background:#fff !important; color:#0f172a !important; }
+`;
+document.head.appendChild(lightStyle);
 
-            // Geolocation (GPS)
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(pos => {
-                    userLoc = L.latLng(pos.coords.latitude, pos.coords.longitude);
-                    map.flyTo(userLoc, 15);
-                    L.circle(userLoc, { radius: 200, color: '#6366f1' }).addTo(map);
-                    addLog("Lokasi Anda berhasil diverifikasi.");
-                }, () => addLog("GPS tidak aktif. Gunakan pencarian."));
-            }
-        }
+// ── AUTH ──
+function toggleMode() {
+  isLogin = !isLogin;
+  document.getElementById('auth-title').textContent = isLogin ? 'Selamat Datang' : 'Buat Akun Baru';
+  document.getElementById('auth-sub').textContent = isLogin ? 'Masuk untuk mulai navigasi' : 'Daftar dan mulai eksplorasi';
+  document.getElementById('actionBtn').textContent = isLogin ? 'Masuk' : 'Daftar';
+  document.getElementById('toggleText').textContent = isLogin ? 'Belum punya akun?' : 'Sudah punya akun?';
+}
 
-        function calculateRoute(start, end, name) {
-            if(routingCtrl) map.removeControl(routingCtrl);
+function processAuth() {
+  const u = document.getElementById('username').value.trim();
+  const p = document.getElementById('password').value.trim();
+  if (!u || !p) { alert('Isi semua kolom!'); return; }
+  if (isLogin) {
+    if (localStorage.getItem('dm_u_' + u) === p) {
+      localStorage.setItem('dm_session', u);
+      startApp();
+    } else alert('Username atau password salah.');
+  } else {
+    localStorage.setItem('dm_u_' + u, p);
+    alert('Berhasil daftar! Silakan masuk.');
+    toggleMode();
+  }
+}
 
-            routingCtrl = L.Routing.control({
-                waypoints: [start, end],
-                lineOptions: { styles: [{ color: '#6366f1', weight: 6, opacity: 0.8 }] },
-                createMarker: function() { return null; }
-            }).on('routesfound', function(e) {
-                const r = e.routes[0];
-                const km = (r.summary.totalDistance / 1000).toFixed(1);
-                const min = Math.round(r.summary.totalTime / 60);
-                addLog(`Tujuan: ${name}`);
-                addLog(`Jarak: ${km} km | Estimasi: ${min} menit`);
-            }).addTo(map);
-        }
+// Enter key support
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('auth-section').style.display !== 'none') processAuth();
+  if (e.key === 'Enter' && document.getElementById('app-content').style.display === 'block') doSearch();
+});
 
-        function addLog(msg) {
-            const list = document.getElementById('log-list');
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            entry.innerHTML = `<b>></b> ${msg}`;
-            list.prepend(entry);
-        }
+// ── START APP ──
+function startApp() {
+  document.getElementById('auth-section').style.display = 'none';
+  document.getElementById('app-content').style.display = 'block';
+  document.getElementById('logoutBtn').style.display = 'block';
 
-        function logout() { localStorage.removeItem('pro_session'); location.reload(); }
-        if(localStorage.getItem('pro_session')) startApp();
+  map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-2.5, 118], 5);
+  updateMapTile();
 
-    </script>
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+  L.control.attribution({ position: 'bottomleft', prefix: false }).addTo(map);
+
+  geocoder = L.Control.Geocoder.nominatim();
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      userLoc = L.latLng(pos.coords.latitude, pos.coords.longitude);
+      map.flyTo(userLoc, 15, { duration: 1.5 });
+      addUserMarker(userLoc);
+      addLog('Lokasi kamu berhasil ditemukan');
+      addLog('Cari tujuan di kolom pencarian');
+    }, () => {
+      addLog('GPS tidak aktif — gunakan pencarian');
+    });
+  }
+}
+
+function addUserMarker(latlng) {
+  if (userMarker) map.removeLayer(userMarker);
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="width:16px;height:16px;border-radius:50%;background:#00c896;border:3px solid #fff;box-shadow:0 0 0 4px rgba(0,200,150,0.3)"></div>`,
+    iconSize: [16, 16], iconAnchor: [8, 8]
+  });
+  userMarker = L.marker(latlng, { icon }).addTo(map);
+  L.circle(latlng, { radius: 300, color: '#00c896', fillColor: '#00c896', fillOpacity: 0.08, weight: 1 }).addTo(map);
+}
+
+// ── SEARCH ──
+function doSearch() {
+  const query = document.getElementById('searchInput').value.trim();
+  if (!query) return;
+  addLog('Mencari: ' + query);
+  geocoder.geocode(query, results => {
+    if (!results || results.length === 0) { addLog('Lokasi tidak ditemukan'); return; }
+    const result = results[0];
+    const dest = result.center;
+    map.flyTo(dest, 15, { duration: 1.5 });
+    const destIcon = L.divIcon({
+      className: '',
+      html: `<div style="width:14px;height:14px;border-radius:50%;background:#ef4444;border:3px solid #fff;box-shadow:0 0 0 4px rgba(239,68,68,0.3)"></div>`,
+      iconSize: [14, 14], iconAnchor: [7, 7]
+    });
+    L.marker(dest, { icon: destIcon }).addTo(map)
+      .bindPopup(`<strong style="font-family:Syne,sans-serif;">${result.name}</strong>`)
+      .openPopup();
+    addLog('Ditemukan: ' + result.name);
+    if (userLoc) calculateRoute(userLoc, dest, result.name);
+  });
+}
+
+// ── ROUTE ──
+function calculateRoute(start, end, name) {
+  if (routingCtrl) map.removeControl(routingCtrl);
+  routingCtrl = L.Routing.control({
+    waypoints: [start, end],
+    lineOptions: { styles: [{ color: '#00c896', weight: 5, opacity: 0.9 }] },
+    createMarker: () => null,
+    addWaypoints: false,
+    routeWhileDragging: false,
+    show: false
+  }).on('routesfound', e => {
+    const r = e.routes[0];
+    const km = (r.summary.totalDistance / 1000).toFixed(1);
+    const min = Math.round(r.summary.totalTime / 60);
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    const waktu = h > 0 ? `${h} jam ${m} mnt` : `${m} menit`;
+    document.getElementById('statsBar').style.display = 'block';
+    document.getElementById('statJarak').textContent = km + ' km';
+    document.getElementById('statWaktu').textContent = waktu;
+    document.getElementById('statTujuan').textContent = name.split(',')[0];
+    addLog(`Rute ke ${name.split(',')[0]}`);
+    addLog(`${km} km · ${waktu}`);
+  }).on('routingerror', () => addLog('Rute tidak tersedia')).addTo(map);
+}
+
+// ── MY LOCATION ──
+function goToMyLocation() {
+  if (userLoc) {
+    map.flyTo(userLoc, 16, { duration: 1 });
+    addLog('Kembali ke lokasi kamu');
+  } else {
+    navigator.geolocation.getCurrentPosition(pos => {
+      userLoc = L.latLng(pos.coords.latitude, pos.coords.longitude);
+      map.flyTo(userLoc, 16, { duration: 1.5 });
+      addUserMarker(userLoc);
+      addLog('Lokasi ditemukan!');
+    }, () => addLog('GPS tidak aktif'));
+  }
+}
+
+// ── LOG ──
+function addLog(msg) {
+  const list = document.getElementById('log-list');
+  const now = new Date();
+  const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  const el = document.createElement('div');
+  el.className = 'log-entry';
+  el.innerHTML = `<b>${time}</b> ${msg}`;
+  list.prepend(el);
+  if (list.children.length > 10) list.removeChild(list.lastChild);
+}
+
+// ── LOGOUT ──
+function logout() {
+  localStorage.removeItem('dm_session');
+  location.reload();
+}
+
+// ── AUTO LOGIN ──
+if (localStorage.getItem('dm_session')) startApp();
+</script>
 </body>
 </html>
